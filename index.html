@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f1e8" />
+    <meta name="description" content="A warm, modern take on the classic five-letter word game." />
+    <title>Letterly — Daily Word Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&amp;family=DM+Sans:wght@400;500;600;700&amp;family=Playfair+Display:ital,wght@0,700;1,700&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="#" aria-label="Letterly home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span>LETTERLY</span>
+        </a>
+
+        <div class="header-actions">
+          <p class="game-label"><span></span> DAILY WORD GAME</p>
+          <button class="icon-button" id="helpButton" aria-label="How to play">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.3 2.3 0 1 1 3 2.2c-.8.3-1.2.9-1.2 1.8v.2M12 17h.01"/></svg>
+          </button>
+          <button class="icon-button" id="statsButton" aria-label="View statistics">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-7h3v7M10.5 20V4h3v16M16 20V9h3v11"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="pageTitle">
+          <p class="eyebrow">TODAY'S PUZZLE <span>•</span> <span id="todayDate"></span></p>
+          <h1 id="pageTitle">Find the hidden<br/><em>five-letter word.</em></h1>
+          <p class="subtitle">You have six tries. Each guess reveals a little more.</p>
+        </section>
+
+        <section class="game-area" aria-label="Word game">
+          <div class="game-card">
+            <div class="board" id="board" role="grid" aria-label="Guess board"></div>
+            <div class="message" id="message" role="status" aria-live="polite"></div>
+            <div class="keyboard" id="keyboard" aria-label="On-screen keyboard"></div>
+          </div>
+
+        </section>
+      </main>
+
+      <footer><span>New puzzle every time you play</span><span class="footer-mark">Play slowly. Think deeply.</span></footer>
+    </div>
+
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+        <div id="modalContent"></div>
+      </section>
+    </div>
+
+    <script src="dictionary.js"></script>
+    <script src="valid-words.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
