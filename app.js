@@ -1,4 +1,5 @@
 const ANSWER_WORDS = window.RANKED_ANSWER_WORDS;
+const WORD_DEFINITIONS = window.WORD_DEFINITIONS;
 const VALID_WORDS = window.VALID_WORDS;
 
 const ROWS = 6;
@@ -33,7 +34,6 @@ const keyboard = document.querySelector("#keyboard");
 const message = document.querySelector("#message");
 const modalBackdrop = document.querySelector("#modalBackdrop");
 const modalContent = document.querySelector("#modalContent");
-const definitionCache = new Map();
 
 function buildBoard() {
   board.innerHTML = "";
@@ -276,84 +276,55 @@ function showStats() {
     <button class="primary-button" data-action="close">BACK TO PUZZLE</button>`);
 }
 
-async function fetchDefinition(word) {
-  if (definitionCache.has(word)) return definitionCache.get(word);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 7000);
-  try {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`, {
-      signal: controller.signal
-    });
-    if (!response.ok) throw new Error("Definition not found");
-
-    const entries = await response.json();
-    const entry = entries.find(item => item.meanings?.some(meaning => meaning.definitions?.length));
-    const meaning = entry?.meanings?.find(item => item.definitions?.length);
-    const definition = meaning?.definitions?.[0];
-    if (!definition?.definition) throw new Error("Definition not found");
-
-    const result = {
-      phonetic: entry.phonetic || entry.phonetics?.find(item => item.text)?.text || "",
-      partOfSpeech: meaning.partOfSpeech || "",
-      definition: definition.definition,
-      example: definition.example || ""
-    };
-    definitionCache.set(word, result);
-    return result;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function loadDefinition(word, gameToken) {
+function loadDefinition(word) {
   const container = document.querySelector("#definitionContent");
   if (!container) return;
+  const result = WORD_DEFINITIONS[word];
+  container.innerHTML = "";
 
-  try {
-    const result = await fetchDefinition(word);
-    if (state.gameToken !== gameToken || !document.body.contains(container)) return;
-
-    container.innerHTML = "";
-    if (result.phonetic || result.partOfSpeech) {
-      const meta = document.createElement("p");
-      meta.className = "definition-meta";
-      meta.textContent = [result.phonetic, result.partOfSpeech].filter(Boolean).join(" · ");
-      container.append(meta);
-    }
-    const meaning = document.createElement("p");
-    meaning.className = "definition-text";
-    meaning.textContent = result.definition;
-    container.append(meaning);
-    if (result.example) {
-      const example = document.createElement("p");
-      example.className = "definition-example";
-      example.textContent = `“${result.example}”`;
-      container.append(example);
-    }
-  } catch {
-    if (state.gameToken !== gameToken || !document.body.contains(container)) return;
-    container.innerHTML = "";
+  if (!result) {
     const unavailable = document.createElement("p");
     unavailable.className = "definition-unavailable";
-    unavailable.textContent = "A definition isn't available for this word right now.";
+    unavailable.textContent = "Definition unavailable.";
     container.append(unavailable);
+    return;
   }
+
+  if (result.p) {
+    const meta = document.createElement("p");
+    meta.className = "definition-meta";
+    meta.textContent = result.p;
+    container.append(meta);
+  }
+  const meaning = document.createElement("p");
+  meaning.className = "definition-text";
+  meaning.textContent = result.d;
+  container.append(meaning);
+  if (result.e) {
+    const example = document.createElement("p");
+    example.className = "definition-example";
+    example.textContent = `“${result.e}”`;
+    container.append(example);
+  }
+  const source = document.createElement("a");
+  source.className = "definition-source";
+  source.href = `https://en.wiktionary.org/wiki/${encodeURIComponent(word.toLowerCase())}`;
+  source.target = "_blank";
+  source.rel = "noreferrer";
+  source.textContent = "Definition from Wiktionary ↗";
+  container.append(source);
 }
 
 function showResult(won) {
   const stats = getStats();
   const difficulty = DIFFICULTIES[state.difficulty].label;
-  const gameToken = state.gameToken;
   openModal(`
     <p class="eyebrow">${difficulty.toUpperCase()} · ${won ? "PUZZLE COMPLETE" : "SO CLOSE"}</p>
     <h2 id="modalTitle">${won ? "Wonderfully done." : "Another word awaits."}</h2>
     <p class="modal-lead">${won ? `You found <strong>${state.answer}</strong> in ${state.row} ${state.row === 1 ? "try" : "tries"}.` : `The hidden word was <strong>${state.answer}</strong>.`}</p>
     <div class="word-definition">
       <p class="definition-label">WORD MEANING</p>
-      <div id="definitionContent" aria-live="polite">
-        <p class="definition-loading">Looking up the meaning…</p>
-      </div>
+      <div id="definitionContent"></div>
     </div>
     <div class="modal-stats">
       <div><strong>${stats.played}</strong><span>PLAYED</span></div>
@@ -361,7 +332,7 @@ function showResult(won) {
       <div><strong>${stats.best}</strong><span>BEST</span></div>
     </div>
     <button class="primary-button" data-action="new">PLAY ANOTHER WORD</button>`);
-  loadDefinition(state.answer, gameToken);
+  loadDefinition(state.answer);
 }
 
 document.addEventListener("keydown", event => {

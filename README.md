@@ -21,12 +21,12 @@ Then visit `http://localhost:8000`.
 - Mobile keyboard protection against accidental double-tap zoom
 - Animated tile reveals and feedback
 - How-to-play and results dialogs
-- Word definitions shown after every win or loss via the [Free Dictionary API](https://dictionaryapi.dev/)
+- Bundled offline word definitions shown after every win or loss
 - Persistent win rate and streak statistics via `localStorage`
 
 ## Dictionary
 
-The answer list contains 5,000 familiar words selected from the Wordle-compatible vocabulary. Ranking uses a hybrid score: 70% English Zipf frequency from [`wordfreq` 3.1.1](https://github.com/rspeer/wordfreq) and 30% subtitle Zipf frequency from [`SUBTLEX-US`](https://github.com/words/subtlex-word-frequencies). A small lexical-confidence penalty keeps questionable variants out of the easier tiers. Frequency ties are sorted alphabetically.
+The answer list contains 5,000 familiar words selected from the Wordle-compatible vocabulary. Ranking uses a hybrid score: 70% English Zipf frequency from [`wordfreq` 3.1.1](https://github.com/rspeer/wordfreq) and 30% subtitle Zipf frequency from [`SUBTLEX-US`](https://github.com/words/subtlex-word-frequencies). A small lexical-confidence penalty keeps questionable variants out of the easier tiers. Frequency ties are sorted alphabetically. Every answer must also have a usable bundled definition.
 
 Answer-only filters remove pure proper names, unsupported forms, and offensive or insensitive terms. Proper-name detection combines SUBTLEX capitalization, the [NLTK Names Corpus](https://www.nltk.org/howto/corpus.html), and lowercase dictionary evidence so words that also have ordinary meanings remain eligible. The safety filter uses the CC BY 4.0 [LDNOOBW English list](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words). Filtered entries remain valid guesses.
 
@@ -37,3 +37,5 @@ Answer-only filters remove pure proper names, unsupported forms, and offensive o
 Guess validation combines the comprehensive 14,855-word, MIT-licensed [`tabatkins/wordle-list`](https://github.com/tabatkins/wordle-list) with 78 words retained from Letterly's original frequency corpus, producing 14,933 valid guesses. The answer list is explicitly included in that union, guaranteeing every possible answer is accepted as a guess.
 
 The frequency ranking credits Robyn Speer and `wordfreq`, Marc Brysbaert and Boris New for SUBTLEX-US, and Mark Kantrowitz and Bill Ross for the Names Corpus. `wordfreq` and SUBTLEX-derived data are distributed under CC BY-SA terms; see the [`wordfreq` attribution notice](https://github.com/rspeer/wordfreq/blob/master/NOTICE.md) and [SUBTLEX-US dataset notes](https://github.com/chrplr/openlexicon/blob/master/datasets-info/SUBTLEX-US/README-SUBTLEXus.md) for source credits.
+
+Offline meanings are derived from English Wiktionary through [`mhollingshead/open-dictionary`](https://github.com/mhollingshead/open-dictionary) and remain attributable under Wiktionary's CC BY-SA/GFDL terms. The compact bundled map stores one clear meaning, part of speech, and an example when available for each answer.
