@@ -21,6 +21,7 @@ Then visit `http://localhost:8000`.
 - Mobile keyboard protection against accidental double-tap zoom
 - Animated tile reveals and feedback
 - How-to-play and results dialogs
+- Word definitions shown after every win or loss via the [Free Dictionary API](https://dictionaryapi.dev/)
 - Persistent win rate and streak statistics via `localStorage`
 
 ## Dictionary
