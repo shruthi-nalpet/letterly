@@ -4,12 +4,13 @@ const VALID_WORDS = window.VALID_WORDS;
 
 const ROWS = 6;
 const COLS = 5;
+const TIER_ENDS = window.ANSWER_TIER_ENDS;
 const KEY_ROWS = [["Q","W","E","R","T","Y","U","I","O","P"], ["A","S","D","F","G","H","J","K","L"], ["ENTER","Z","X","C","V","B","N","M","⌫"]];
 const STATE_RANK = { absent: 1, present: 2, correct: 3 };
 const DIFFICULTIES = {
-  easy: { label: "Easy", start: 0, end: 1000 },
-  medium: { label: "Medium", start: 1000, end: 3000 },
-  hard: { label: "Hard", start: 3000, end: 5000 }
+  easy: { label: "Easy", start: 0, end: TIER_ENDS[0] },
+  medium: { label: "Medium", start: TIER_ENDS[0], end: TIER_ENDS[1] },
+  hard: { label: "Hard", start: TIER_ENDS[1], end: TIER_ENDS[2] }
 };
 
 function savedDifficulty() {
@@ -32,6 +33,7 @@ const state = {
 const board = document.querySelector("#board");
 const keyboard = document.querySelector("#keyboard");
 const message = document.querySelector("#message");
+const hintButton = document.querySelector("#hintButton");
 const modalBackdrop = document.querySelector("#modalBackdrop");
 const modalContent = document.querySelector("#modalContent");
 
@@ -103,6 +105,7 @@ function startGame() {
   state.locked = false;
   state.over = false;
   message.textContent = "";
+  updateHintUI();
   updateDifficultyUI();
   buildBoard();
   buildKeyboard();
@@ -157,6 +160,7 @@ function submitGuess() {
   if (!VALID_WORDS.has(guess)) return notify("Try another word", true);
 
   state.locked = true;
+  updateHintUI();
   const gameToken = state.gameToken;
   const result = scoreGuess(guess, state.answer);
   result.forEach((status, index) => {
@@ -180,18 +184,25 @@ function finishTurn(guess) {
   state.locked = false;
   if (guess === state.answer) {
     state.over = true;
+    updateHintUI();
     message.textContent = ["Beautiful!", "Excellent!", "Splendid!", "Well played!"][Math.min(state.row - 1, 3)];
     recordResult(true, state.row);
     setTimeout(() => showResult(true), 650);
   } else if (state.row === ROWS) {
     state.over = true;
+    updateHintUI();
     message.textContent = `The word was ${state.answer}`;
     recordResult(false);
     setTimeout(() => showResult(false), 650);
   } else {
+    updateHintUI();
     message.textContent = "Keep going";
     setTimeout(() => { if (!state.over) message.textContent = ""; }, 1000);
   }
+}
+
+function updateHintUI() {
+  hintButton.hidden = state.row !== ROWS - 1 || state.locked || state.over;
 }
 
 function updateKey(letter, status) {
@@ -250,7 +261,7 @@ function showHelp() {
   openModal(`
     <p class="eyebrow">THE BASICS</p>
     <h2 id="modalTitle">How to play</h2>
-    <p class="modal-lead">Guess the hidden word in six tries. Each guess must be a valid five-letter word. Difficulty changes word familiarity, never the rules.</p>
+    <p class="modal-lead">Guess the hidden word in six tries. Each guess must be a valid five-letter word. A meaning hint becomes available for your final guess. Difficulty changes word familiarity, never the rules.</p>
     <div class="examples">
       <div class="example-row"><span class="example-tile correct">C</span><span class="example-tile">R</span><span class="example-tile">A</span><span class="example-tile">N</span><span class="example-tile">E</span></div>
       <p class="explanation"><strong>C</strong> is in the word and in the right spot.</p>
@@ -276,7 +287,7 @@ function showStats() {
     <button class="primary-button" data-action="close">BACK TO PUZZLE</button>`);
 }
 
-function loadDefinition(word) {
+function loadDefinition(word, { showSource = true, concealWord = false } = {}) {
   const container = document.querySelector("#definitionContent");
   if (!container) return;
   const result = WORD_DEFINITIONS[word];
@@ -298,14 +309,16 @@ function loadDefinition(word) {
   }
   const meaning = document.createElement("p");
   meaning.className = "definition-text";
-  meaning.textContent = result.d;
+  const conceal = text => concealWord ? text.replace(new RegExp(word, "gi"), "_____") : text;
+  meaning.textContent = conceal(result.d);
   container.append(meaning);
   if (result.e) {
     const example = document.createElement("p");
     example.className = "definition-example";
-    example.textContent = `“${result.e}”`;
+    example.textContent = `“${conceal(result.e)}”`;
     container.append(example);
   }
+  if (!showSource) return;
   const source = document.createElement("a");
   source.className = "definition-source";
   source.href = `https://en.wiktionary.org/wiki/${encodeURIComponent(word.toLowerCase())}`;
@@ -313,6 +326,20 @@ function loadDefinition(word) {
   source.rel = "noreferrer";
   source.textContent = "Definition from Wiktionary ↗";
   container.append(source);
+}
+
+function showHint() {
+  if (state.row !== ROWS - 1 || state.locked || state.over) return;
+  openModal(`
+    <p class="eyebrow">FINAL-ROW HINT</p>
+    <h2 id="modalTitle">A little meaning.</h2>
+    <p class="modal-lead">The hidden word matches this definition:</p>
+    <div class="word-definition">
+      <p class="definition-label">MEANING HINT</p>
+      <div id="definitionContent"></div>
+    </div>
+    <button class="primary-button" data-action="close">BACK TO YOUR LAST GUESS</button>`);
+  loadDefinition(state.answer, { showSource: false, concealWord: true });
 }
 
 function showResult(won) {
@@ -344,6 +371,7 @@ document.addEventListener("keydown", event => {
 });
 document.querySelector("#helpButton").addEventListener("click", showHelp);
 document.querySelector("#statsButton").addEventListener("click", showStats);
+hintButton.addEventListener("click", showHint);
 document.querySelectorAll(".difficulty-option").forEach(button => {
   button.addEventListener("click", () => selectDifficulty(button.dataset.difficulty));
 });

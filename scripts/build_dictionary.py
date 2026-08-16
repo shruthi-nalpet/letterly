@@ -25,6 +25,8 @@ def parse_args():
     parser.add_argument("--names", required=True)
     parser.add_argument("--lexicon", required=True)
     parser.add_argument("--definitions", required=True)
+    parser.add_argument("--compact-definitions", required=True)
+    parser.add_argument("--report-only", action="store_true")
     return parser.parse_args()
 
 
@@ -58,6 +60,33 @@ def best_definition(entry):
         "d": definition,
         "e": example,
     }
+
+
+def best_compact_definition(entry):
+    parts = entry.get("p", [])
+    if parts and all(part in {"name", "proper noun"} for part in parts):
+        return None
+
+    options = []
+    for order, raw_text in enumerate(entry.get("d", [])):
+        definition = clean_text(raw_text)
+        if not definition:
+            continue
+        lowered = definition.lower()
+        penalty = 100 if any(label in lowered for label in DISCOURAGED_LABELS) else 0
+        options.append((penalty + order, definition))
+    if not options:
+        return None
+
+    part_names = {
+        "adj": "adjective", "adv": "adverb", "conj": "conjunction",
+        "det": "determiner", "intj": "interjection", "num": "numeral",
+        "prep": "preposition", "pron": "pronoun", "verb": "verb",
+        "noun": "noun",
+    }
+    part = part_names.get(parts[0], parts[0]) if len(parts) == 1 else ""
+    _, definition = min(options, key=lambda item: item[0])
+    return {"p": part, "d": definition, "e": ""}
 
 
 def main():
@@ -96,30 +125,58 @@ def main():
 
     ranked = sorted(eligible, key=lambda word: (-score(word), -zipf_frequency(word, "en"), word))
 
-    definitions = {}
+    baseline = ranked[:5000]
+    baseline_set = set(baseline)
+
+    open_definitions = {}
     with zipfile.ZipFile(args.definitions) as archive:
         dictionary = {}
         for filename in archive.namelist():
             if filename.count("/") == 3 and filename.endswith(".json"):
                 dictionary.update(json.loads(archive.read(filename)))
-
-    answers = []
-    for word in ranked:
+    for word in baseline:
         entry = dictionary.get(word)
-        if not isinstance(entry, dict):
-            continue
-        definition = best_definition(entry)
+        if isinstance(entry, dict) and (definition := best_definition(entry)):
+            open_definitions[word] = definition
+
+    compact_definitions = {}
+    with open(args.compact_definitions) as source:
+        for line in source:
+            entry = json.loads(line)
+            word = entry.get("")
+            if word not in baseline_set:
+                continue
+            if definition := best_compact_definition(entry):
+                compact_definitions[word] = definition
+
+    definitions = {}
+    answers = []
+    missing = []
+    retained_by_tier = [0, 0, 0]
+    for rank, word in enumerate(baseline):
+        definition = open_definitions.get(word) or compact_definitions.get(word)
         if not definition:
+            missing.append(word.upper())
             continue
         answer = word.upper()
         answers.append(answer)
         definitions[answer] = definition
-        if len(answers) == 5000:
-            break
+        retained_by_tier[0 if rank < 1000 else 1 if rank < 3000 else 2] += 1
 
-    if len(answers) != 5000:
-        raise RuntimeError(f"Expected 5,000 defined answers, found {len(answers)}")
-    print(json.dumps({"answers": answers, "definitions": definitions}, ensure_ascii=False, separators=(",", ":")))
+    tier_ends = [retained_by_tier[0], retained_by_tier[0] + retained_by_tier[1], len(answers)]
+
+    report = {
+        "baseline": len(baseline),
+        "openCoverage": len(open_definitions),
+        "compactCoverage": len(compact_definitions),
+        "combinedCoverage": len(answers),
+        "recoveredByCompact": len(set(compact_definitions) - set(open_definitions)),
+        "retainedByTier": retained_by_tier,
+        "removedByTier": [1000 - retained_by_tier[0], 2000 - retained_by_tier[1], 2000 - retained_by_tier[2]],
+        "missing": missing,
+    }
+    output = report if args.report_only else {"answers": answers, "definitions": definitions, "tierEnds": tier_ends, "report": report}
+    print(json.dumps(output, ensure_ascii=False, separators=(",", ":")))
 
 
 if __name__ == "__main__":
