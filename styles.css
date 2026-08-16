@@ -45,10 +45,8 @@ h1 { margin: 0; font: 700 clamp(42px, 5vw, 68px)/.98 "Playfair Display", serif; 
 h1 em { color: var(--green); font-weight: 700; }
 .subtitle { margin: 21px 0 0; color: var(--muted); font-size: 14px; }
 .difficulty-selector { width: min(100%, 440px); margin: 24px auto 0; padding: 4px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,.2); }
-.difficulty-option { min-width: 0; padding: 9px 8px 8px; border: 0; border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
-.difficulty-option strong, .difficulty-option span { display: block; }
-.difficulty-option strong { font: 700 13px "DM Sans", sans-serif; }
-.difficulty-option span { margin-top: 3px; font-size: 7px; letter-spacing: .06em; }
+.difficulty-option { min-width: 0; padding: 11px 8px; border: 0; border-radius: 4px; background: transparent; color: var(--muted); cursor: pointer; transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
+.difficulty-option strong { display: block; font: 700 13px "DM Sans", sans-serif; }
 .difficulty-option:hover { color: var(--ink); background: rgba(65,111,88,.06); }
 .difficulty-option.active { color: white; background: var(--green); box-shadow: 0 4px 12px rgba(49,88,68,.2); }
 
@@ -120,7 +118,6 @@ footer { border-top: 1px solid var(--line); min-height: 54px; display: flex; jus
   .subtitle { font-size: 12px; }
   .difficulty-selector { margin-top: 18px; }
   .difficulty-option { padding-inline: 3px; }
-  .difficulty-option span { font-size: 6px; }
   .tile { border-radius: 3px; }
   .key { min-width: 0; height: 43px; padding: 0 2px; font-size: 10px; }
   .modal { padding: 32px 24px; }
