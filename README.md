@@ -15,14 +15,22 @@ Then visit `http://localhost:8000`.
 ## Features
 
 - Six-guess game loop with correct duplicate-letter scoring
+- Easy, Medium, and Hard answer-frequency tiers with the same rules and attempt count
 - Physical and on-screen keyboards
 - Responsive desktop and mobile layouts
+- Mobile keyboard protection against accidental double-tap zoom
 - Animated tile reveals and feedback
 - How-to-play and results dialogs
 - Persistent win rate and streak statistics via `localStorage`
 
 ## Dictionary
 
-The game selects answers from the top 1,000 five-letter alphabetic words, in frequency order, filtered from the swear-free edition of [`first20hours/google-10000-english`](https://github.com/first20hours/google-10000-english). That source derives its ranking from Google's Trillion Word Corpus.
+The answer list contains the 5,000 most frequently used words from the Wordle-compatible vocabulary. It is ranked with English Zipf frequencies from [`wordfreq` 3.1.1](https://github.com/rspeer/wordfreq), whose data combines Wikipedia, subtitles, news, books, web text, Twitter, and Reddit. Frequency ties are sorted alphabetically.
 
-Guess validation uses the comprehensive 14,855-word, MIT-licensed [`tabatkins/wordle-list`](https://github.com/tabatkins/wordle-list), taken from the original game's source. The final valid-guess set is the union of that list and the answer pool, ensuring every possible answer is also accepted as a guess.
+- Easy: ranks 1–1,000
+- Medium: ranks 1,001–3,000
+- Hard: ranks 3,001–5,000
+
+Guess validation combines the comprehensive 14,855-word, MIT-licensed [`tabatkins/wordle-list`](https://github.com/tabatkins/wordle-list) with 78 words retained from Letterly's original frequency corpus, producing 14,933 valid guesses. The answer list is explicitly included in that union, guaranteeing every possible answer is accepted as a guess.
+
+The frequency ranking credits Robyn Speer and `wordfreq`. Its underlying frequency data is distributed under CC BY-SA 4.0; see the [`wordfreq` attribution notice](https://github.com/rspeer/wordfreq/blob/master/NOTICE.md) for its source credits.

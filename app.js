@@ -1,10 +1,20 @@
-const ANSWER_WORDS = window.ANSWER_WORDS;
+const ANSWER_WORDS = window.RANKED_ANSWER_WORDS;
 const VALID_WORDS = window.VALID_WORDS;
 
 const ROWS = 6;
 const COLS = 5;
 const KEY_ROWS = [["Q","W","E","R","T","Y","U","I","O","P"], ["A","S","D","F","G","H","J","K","L"], ["ENTER","Z","X","C","V","B","N","M","⌫"]];
 const STATE_RANK = { absent: 1, present: 2, correct: 3 };
+const DIFFICULTIES = {
+  easy: { label: "Easy", start: 0, end: 1000 },
+  medium: { label: "Medium", start: 1000, end: 3000 },
+  hard: { label: "Hard", start: 3000, end: 5000 }
+};
+
+function savedDifficulty() {
+  const saved = localStorage.getItem("letterly-difficulty");
+  return DIFFICULTIES[saved] ? saved : "easy";
+}
 
 const state = {
   answer: "",
@@ -13,7 +23,9 @@ const state = {
   guesses: Array.from({ length: ROWS }, () => Array(COLS).fill("")),
   keyStates: {},
   locked: false,
-  over: false
+  over: false,
+  difficulty: savedDifficulty(),
+  gameToken: 0
 };
 
 const board = document.querySelector("#board");
@@ -60,10 +72,28 @@ function buildKeyboard() {
 }
 
 function chooseWord() {
-  return ANSWER_WORDS[Math.floor(Math.random() * ANSWER_WORDS.length)];
+  const tier = DIFFICULTIES[state.difficulty];
+  const index = tier.start + Math.floor(Math.random() * (tier.end - tier.start));
+  return ANSWER_WORDS[index];
+}
+
+function updateDifficultyUI() {
+  document.querySelectorAll(".difficulty-option").forEach(button => {
+    const active = button.dataset.difficulty === state.difficulty;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function selectDifficulty(difficulty) {
+  if (!DIFFICULTIES[difficulty] || difficulty === state.difficulty) return;
+  state.difficulty = difficulty;
+  localStorage.setItem("letterly-difficulty", difficulty);
+  startGame();
 }
 
 function startGame() {
+  state.gameToken++;
   state.answer = chooseWord();
   state.row = 0;
   state.col = 0;
@@ -72,6 +102,7 @@ function startGame() {
   state.locked = false;
   state.over = false;
   message.textContent = "";
+  updateDifficultyUI();
   buildBoard();
   buildKeyboard();
 }
@@ -125,17 +156,21 @@ function submitGuess() {
   if (!VALID_WORDS.has(guess)) return notify("Try another word", true);
 
   state.locked = true;
+  const gameToken = state.gameToken;
   const result = scoreGuess(guess, state.answer);
   result.forEach((status, index) => {
     const tile = getTile(state.row, index);
     setTimeout(() => {
+      if (state.gameToken !== gameToken) return;
       tile.classList.add("reveal");
       setTimeout(() => tile.classList.add(status), 245);
       updateKey(guess[index], status);
     }, index * 230);
   });
 
-  setTimeout(() => finishTurn(guess), COLS * 230 + 350);
+  setTimeout(() => {
+    if (state.gameToken === gameToken) finishTurn(guess);
+  }, COLS * 230 + 350);
 }
 
 function finishTurn(guess) {
@@ -214,7 +249,7 @@ function showHelp() {
   openModal(`
     <p class="eyebrow">THE BASICS</p>
     <h2 id="modalTitle">How to play</h2>
-    <p class="modal-lead">Guess the hidden word in six tries. Each guess must be a valid five-letter word.</p>
+    <p class="modal-lead">Guess the hidden word in six tries. Each guess must be a valid five-letter word. Difficulty changes word familiarity, never the rules.</p>
     <div class="examples">
       <div class="example-row"><span class="example-tile correct">C</span><span class="example-tile">R</span><span class="example-tile">A</span><span class="example-tile">N</span><span class="example-tile">E</span></div>
       <p class="explanation"><strong>C</strong> is in the word and in the right spot.</p>
@@ -242,8 +277,9 @@ function showStats() {
 
 function showResult(won) {
   const stats = getStats();
+  const difficulty = DIFFICULTIES[state.difficulty].label;
   openModal(`
-    <p class="eyebrow">${won ? "PUZZLE COMPLETE" : "SO CLOSE"}</p>
+    <p class="eyebrow">${difficulty.toUpperCase()} · ${won ? "PUZZLE COMPLETE" : "SO CLOSE"}</p>
     <h2 id="modalTitle">${won ? "Wonderfully done." : "Another word awaits."}</h2>
     <p class="modal-lead">${won ? `You found <strong>${state.answer}</strong> in ${state.row} ${state.row === 1 ? "try" : "tries"}.` : `The hidden word was <strong>${state.answer}</strong>.`}</p>
     <div class="modal-stats">
@@ -263,6 +299,9 @@ document.addEventListener("keydown", event => {
 });
 document.querySelector("#helpButton").addEventListener("click", showHelp);
 document.querySelector("#statsButton").addEventListener("click", showStats);
+document.querySelectorAll(".difficulty-option").forEach(button => {
+  button.addEventListener("click", () => selectDifficulty(button.dataset.difficulty));
+});
 document.querySelector("#modalClose").addEventListener("click", closeModal);
 modalBackdrop.addEventListener("click", event => { if (event.target === modalBackdrop) closeModal(); });
 modalContent.addEventListener("click", event => {

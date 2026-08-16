@@ -746,6 +746,21 @@ benne birth murri gadis firks hoars quete retin slags shirt gonef token oboes ho
 joles kelpy triad poche mocap swami tocky femal goary waacs dunny decal fungs cadgy jalap
 `.trim().toUpperCase().split(/\s+/);
 
-// Always accept every possible answer, including any corpus answer absent from the Wordle list.
-window.VALID_WORDS = new Set([...window.ANSWER_WORDS, ...WORDLE_GUESSES]);
+// Preserve the 78 frequency-corpus words accepted by the original Letterly dictionary.
+const CORPUS_GUESSES = Object.freeze([
+  "AARON", "ADAMS", "ALICE", "APRIL", "ASIAN", "BLAIR", "BRIAN", "BRUCE", "CHRIS", "CLARK",
+  "CONST", "CZECH", "DAVID", "DAVIS", "DELHI", "DICKE", "DIEGO", "EGYPT", "EPSON", "ESSEX",
+  "EVANS", "FOTOS", "HELEN", "IDAHO", "IRAQI", "IRISH", "ISLAM", "ITALY", "JANET", "JASON",
+  "JULIE", "KAREN", "KATIE", "KEITH", "KENYA", "KEVIN", "KODAK", "KOREA", "LANKA", "LARRY",
+  "LATIN", "LEEDS", "LINDA", "LOPEZ", "LYCOS", "MAINE", "MALTA", "MARIE", "MARIO", "MIAMI",
+  "MOORE", "MULTI", "MYSQL", "NEPAL", "NIKON", "NOKIA", "OMAHA", "PHPBB", "RHODE", "SALEM",
+  "SAMOA", "SANTA", "SARAH", "SAUDI", "SCOTT", "SIMON", "SKYPE", "STEVE", "SUSAN", "TAMPA",
+  "THATS", "TOKYO", "TWIKI", "UTILS", "WAYNE", "XANAX", "XHTML", "ZDNET"
+]);
 
+// The union guarantees that every possible answer is always accepted as a guess.
+window.VALID_WORDS = new Set([
+  ...window.RANKED_ANSWER_WORDS,
+  ...WORDLE_GUESSES,
+  ...CORPUS_GUESSES
+]);
