@@ -26,7 +26,9 @@ Then visit `http://localhost:8000`.
 
 ## Dictionary
 
-The answer list contains the 5,000 most frequently used words from the Wordle-compatible vocabulary. It is ranked with English Zipf frequencies from [`wordfreq` 3.1.1](https://github.com/rspeer/wordfreq), whose data combines Wikipedia, subtitles, news, books, web text, Twitter, and Reddit. Frequency ties are sorted alphabetically.
+The answer list contains 5,000 familiar words selected from the Wordle-compatible vocabulary. Ranking uses a hybrid score: 70% English Zipf frequency from [`wordfreq` 3.1.1](https://github.com/rspeer/wordfreq) and 30% subtitle Zipf frequency from [`SUBTLEX-US`](https://github.com/words/subtlex-word-frequencies). A small lexical-confidence penalty keeps questionable variants out of the easier tiers. Frequency ties are sorted alphabetically.
+
+Answer-only filters remove pure proper names, unsupported forms, and offensive or insensitive terms. Proper-name detection combines SUBTLEX capitalization, the [NLTK Names Corpus](https://www.nltk.org/howto/corpus.html), and lowercase dictionary evidence so words that also have ordinary meanings remain eligible. The safety filter uses the CC BY 4.0 [LDNOOBW English list](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words). Filtered entries remain valid guesses.
 
 - Easy: ranks 1–1,000
 - Medium: ranks 1,001–3,000
@@ -34,4 +36,4 @@ The answer list contains the 5,000 most frequently used words from the Wordle-co
 
 Guess validation combines the comprehensive 14,855-word, MIT-licensed [`tabatkins/wordle-list`](https://github.com/tabatkins/wordle-list) with 78 words retained from Letterly's original frequency corpus, producing 14,933 valid guesses. The answer list is explicitly included in that union, guaranteeing every possible answer is accepted as a guess.
 
-The frequency ranking credits Robyn Speer and `wordfreq`. Its underlying frequency data is distributed under CC BY-SA 4.0; see the [`wordfreq` attribution notice](https://github.com/rspeer/wordfreq/blob/master/NOTICE.md) for its source credits.
+The frequency ranking credits Robyn Speer and `wordfreq`, Marc Brysbaert and Boris New for SUBTLEX-US, and Mark Kantrowitz and Bill Ross for the Names Corpus. `wordfreq` and SUBTLEX-derived data are distributed under CC BY-SA terms; see the [`wordfreq` attribution notice](https://github.com/rspeer/wordfreq/blob/master/NOTICE.md) and [SUBTLEX-US dataset notes](https://github.com/chrplr/openlexicon/blob/master/datasets-info/SUBTLEX-US/README-SUBTLEXus.md) for source credits.
