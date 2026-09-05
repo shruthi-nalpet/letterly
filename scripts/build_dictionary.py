@@ -89,6 +89,13 @@ def best_compact_definition(entry):
     return {"p": part, "d": definition, "e": ""}
 
 
+def is_s_plural(word, definition):
+    """Return whether a word ending in s is defined as a plural form."""
+    return word.endswith("s") and bool(
+        re.search(r"\bplural of\b", definition.get("d", ""), re.IGNORECASE)
+    )
+
+
 def main():
     args = parse_args()
     with open(args.valid_words) as source:
@@ -152,11 +159,15 @@ def main():
     definitions = {}
     answers = []
     missing = []
+    removed_plurals = []
     retained_by_tier = [0, 0, 0]
     for rank, word in enumerate(baseline):
         definition = open_definitions.get(word) or compact_definitions.get(word)
         if not definition:
             missing.append(word.upper())
+            continue
+        if is_s_plural(word, definition):
+            removed_plurals.append(word.upper())
             continue
         answer = word.upper()
         answers.append(answer)
@@ -170,6 +181,7 @@ def main():
         "openCoverage": len(open_definitions),
         "compactCoverage": len(compact_definitions),
         "combinedCoverage": len(answers),
+        "removedPlurals": len(removed_plurals),
         "recoveredByCompact": len(set(compact_definitions) - set(open_definitions)),
         "retainedByTier": retained_by_tier,
         "removedByTier": [1000 - retained_by_tier[0], 2000 - retained_by_tier[1], 2000 - retained_by_tier[2]],
