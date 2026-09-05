@@ -23,6 +23,7 @@ const state = {
   row: 0,
   col: 0,
   guesses: Array.from({ length: ROWS }, () => Array(COLS).fill("")),
+  evaluations: [],
   keyStates: {},
   locked: false,
   over: false,
@@ -101,6 +102,7 @@ function startGame() {
   state.row = 0;
   state.col = 0;
   state.guesses = Array.from({ length: ROWS }, () => Array(COLS).fill(""));
+  state.evaluations = [];
   state.keyStates = {};
   state.locked = false;
   state.over = false;
@@ -125,6 +127,8 @@ function addLetter(letter) {
   const tile = getTile(state.row, state.col);
   tile.textContent = letter;
   tile.classList.add("filled");
+  const liveStatus = getLiveTileStatus(letter, state.col);
+  if (liveStatus) tile.classList.add(liveStatus);
   state.col++;
 }
 
@@ -134,7 +138,21 @@ function removeLetter() {
   state.guesses[state.row][state.col] = "";
   const tile = getTile(state.row, state.col);
   tile.textContent = "";
-  tile.classList.remove("filled");
+  tile.classList.remove("filled", "live-absent", "live-present", "live-correct");
+}
+
+function getLiveTileStatus(letter, col) {
+  if (state.keyStates[letter] === "absent") return "live-absent";
+
+  const matchesConfirmedPosition = state.evaluations.some(({ guess, result }) =>
+    guess[col] === letter && result[col] === "correct"
+  );
+  if (matchesConfirmedPosition) return "live-correct";
+
+  const repeatsRejectedPosition = state.evaluations.some(({ guess, result }) =>
+    guess[col] === letter && result[col] === "present"
+  );
+  return repeatsRejectedPosition ? "live-present" : "";
 }
 
 function scoreGuess(guess, answer) {
@@ -163,12 +181,16 @@ function submitGuess() {
   updateHintUI();
   const gameToken = state.gameToken;
   const result = scoreGuess(guess, state.answer);
+  state.evaluations.push({ guess, result: [...result] });
   result.forEach((status, index) => {
     const tile = getTile(state.row, index);
     setTimeout(() => {
       if (state.gameToken !== gameToken) return;
       tile.classList.add("reveal");
-      setTimeout(() => tile.classList.add(status), 245);
+      setTimeout(() => {
+        tile.classList.remove("live-absent", "live-present", "live-correct");
+        tile.classList.add(status);
+      }, 245);
       updateKey(guess[index], status);
     }, index * 230);
   });
@@ -212,6 +234,7 @@ function updateKey(letter, status) {
   const key = document.querySelector(`[data-key="${letter}"]`);
   key.classList.remove("absent", "present", "correct");
   key.classList.add(state.keyStates[letter]);
+  key.setAttribute("aria-label", `${letter}, ${state.keyStates[letter] === "absent" ? "not in word" : state.keyStates[letter]}`);
 }
 
 function notify(text, shake) {
