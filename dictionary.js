@@ -1,8 +1,8 @@
-// 4,849 familiar, definition-backed, Wordle-compatible answer words.
+// 3,929 familiar, definition-backed, Wordle-compatible answer words.
 // Hybrid score: 70% wordfreq English Zipf + 30% SUBTLEX-US subtitle Zipf frequency.
 // Candidates without a reliable bundled meaning are excluded.
 // Tier endpoints preserve the original frequency bands after exclusions.
-window.ANSWER_TIER_ENDS = Object.freeze([999,2975,4849]);
+window.ANSWER_TIER_ENDS = Object.freeze([869,2423,3929]);
 window.RANKED_ANSWER_WORDS = Object.freeze([
   "ABOUT", "THERE", "WOULD", "THINK", "THEIR", "RIGHT", "WHICH", "COULD", "WHERE", "OTHER",
   "GOING", "FIRST", "AFTER", "THESE", "NEVER", "STILL", "THOSE", "GREAT", "BEING", "WORLD",
